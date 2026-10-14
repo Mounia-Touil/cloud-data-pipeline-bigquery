@@ -1,0 +1,94 @@
+@startuml
+' --- General Layout ---
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+
+' --- Layer 1: Extraction ---
+package "Data Extraction Layer" #D9ECFF {
+    class ExtractionManager {
+        - configurationSettings
+        - executionPaths
+        - jobStatus
+        --
+        + initializeEnvironment()
+        + runExtraction()
+    }
+    
+    class EnvironmentSetup {
+        + installDependencies()
+    }
+    
+    class ADDataExtractor {
+        + extractUsers()
+    }
+    
+    class BigQueryLoader {
+        + uploadData()
+    }
+
+    ' Hidden vertical alignment
+    ExtractionManager -[hidden]down- EnvironmentSetup
+    EnvironmentSetup -[hidden]down- ADDataExtractor
+    ADDataExtractor -[hidden]down- BigQueryLoader
+
+    ' Actual Arrows
+    ExtractionManager --> EnvironmentSetup : initializes
+    ExtractionManager --> ADDataExtractor : coordinates
+    ExtractionManager --> BigQueryLoader : loads data
+    ADDataExtractor --> BigQueryLoader : raw data
+}
+
+' --- Layer 2: Staging ---
+package "Data Staging Layer" #DFF2DF {
+    class DataCleaner {
+        + removeDuplicates()
+    }
+    
+    class DataTransformer {
+        + mapAttributes()
+    }
+    
+    class ProcessedDataRepository {
+        + storeProcessedData()
+    }
+
+    ' Hidden vertical alignment
+    DataCleaner -[hidden]down- DataTransformer
+    DataTransformer -[hidden]down- ProcessedDataRepository
+
+    ' Actual Arrows
+    DataCleaner --> DataTransformer : cleaned
+    DataTransformer --> ProcessedDataRepository : stores
+}
+
+' --- Layer 3: Presentation ---
+package "Data Presentation Layer" #FFE8D6 {
+    class CloudRunService {
+        + queryProcessedData()
+    }
+    
+    class LucidFormatter {
+        + formatNodes()
+    }
+    
+    class LucidAPIClient {
+        + postPayload()
+    }
+
+    ' Hidden vertical alignment
+    CloudRunService -[hidden]down- LucidFormatter
+    LucidFormatter -[hidden]down- LucidAPIClient
+
+    ' Actual Arrows
+    CloudRunService --> LucidFormatter : formats
+    LucidFormatter --> LucidAPIClient : provides payload
+}
+
+' --- Force side-by-side Layout ---
+"Data Extraction Layer" -[bold]right-> "Data Staging Layer" : Trigger
+"Data Staging Layer" -[bold]right-> "Data Presentation Layer" : Fetch
+
+@enduml
